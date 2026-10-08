@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora de NF proporcional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F5F4; --paper:#FFFFFF; --ink:#16233B; --muted:#5E6878; --line:#DCE1E0;
+  --accent:#0E7466; --accent-soft:#E2F1EE; --warn:#B4441F; --stub:#16233B; --stub-ink:#F3F5F4;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1624; --paper:#172133; --ink:#E8ECF2; --muted:#9AA5B5; --line:#2A3650;
+    --accent:#4FC3AE; --accent-soft:#183A39; --warn:#F08A63; --stub:#E8ECF2; --stub-ink:#0F1624;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1624; --paper:#172133; --ink:#E8ECF2; --muted:#9AA5B5; --line:#2A3650;
+  --accent:#4FC3AE; --accent-soft:#183A39; --warn:#F08A63; --stub:#E8ECF2; --stub-ink:#0F1624;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.5;font-variant-numeric:tabular-nums}
+main{max-width:980px;margin:0 auto;padding:2.5rem 1.25rem 3rem}
+h1{font-size:clamp(1.6rem,3.5vw,2.2rem);line-height:1.15;margin:0 0 .4rem;font-weight:700;letter-spacing:-.01em}
+.lead{color:var(--muted);margin:0 0 2rem;max-width:60ch}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1.5rem}
+.field{margin-bottom:1.1rem}
+label{display:block;font-weight:600;font-size:.92rem;margin-bottom:.35rem}
+.hint{color:var(--muted);font-size:.82rem;margin-top:.3rem}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:8px;padding:.65rem .75rem}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:.75rem}
+.seg button{flex:1;font:inherit;font-size:.88rem;padding:.5rem;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.err{color:var(--warn);font-size:.85rem;margin-top:.3rem;min-height:1.2em}
+
+/* resultado: canhoto de nota */
+.stub{background:var(--stub);color:var(--stub-ink);border-radius:14px 14px 4px 4px;padding:1.5rem 1.5rem 1.25rem;position:relative}
+.stub::after{content:"";position:absolute;left:0;right:0;bottom:-10px;height:10px;
+  background:radial-gradient(circle at 10px -2px,transparent 9px,var(--stub) 10px) repeat-x;background-size:20px 10px}
+.stub .who{font-size:.9rem;opacity:.75;margin:0}
+.stub .value{font-size:clamp(2.2rem,6vw,3rem);font-weight:700;line-height:1.1;margin:.35rem 0 .2rem;letter-spacing:-.02em}
+.stub .comp{font-size:.9rem;opacity:.75;margin:0}
+.formula{margin-top:1.75rem;padding:1.1rem 1.25rem;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.formula p{margin:0 0 .4rem}
+.eq{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem .6rem;font-size:1.05rem}
+.eq b{font-weight:600}
+.eq span.op{color:var(--muted)}
+.daily{color:var(--muted);font-size:.88rem;margin-top:.5rem}
+.actions{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem}
+.btn{font:inherit;font-weight:600;font-size:.92rem;border-radius:8px;padding:.6rem 1rem;cursor:pointer;border:1px solid var(--accent)}
+.btn.primary{background:var(--accent);color:var(--paper)}
+.btn.ghost{background:transparent;color:var(--accent)}
+textarea{width:100%;font:inherit;font-size:.92rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.75rem;resize:vertical;min-height:7.5rem;margin-top:1rem}
+.toast{font-size:.85rem;color:var(--accent);min-height:1.2em;margin-top:.4rem}
+
+.history{margin-top:2rem}
+.history h2{font-size:1.1rem;margin:0 0 .75rem}
+.table-wrap{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:600px}
+th,td{text-align:left;padding:.65rem .85rem;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:.82rem}
+tr:last-child td{border-bottom:0}
+td.num{text-align:right}
+.empty{padding:1rem;color:var(--muted);font-size:.9rem}
+.linkbtn{background:none;border:0;color:var(--muted);font:inherit;font-size:.85rem;cursor:pointer;text-decoration:underline;padding:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Valor proporcional para nota fiscal</h1>
+  <p class="lead">Informe o valor mensal do prestador, a competência e os dias trabalhados. O cálculo segue a regra: valor mensal ÷ dias do mês × dias trabalhados.</p>
+
+  <div class="grid">
+    <section class="panel" aria-label="Dados do cálculo">
+      <div class="field">
+        <label for="nome">Prestador</label>
+        <input id="nome" type="text" placeholder="Nome ou razão social" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="valor">Valor mensal do contrato</label>
+        <input id="valor" type="text" inputmode="numeric" placeholder="R$ 0,00" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="comp">Competência</label>
+        <input id="comp" type="month">
+        <div class="hint" id="diasMesHint"></div>
+      </div>
+      <div class="field">
+        <label>Dias trabalhados</label>
+        <div class="seg" role="group" aria-label="Como informar os dias">
+          <button type="button" id="modoDias" aria-pressed="true">Informar quantidade</button>
+          <button type="button" id="modoPeriodo" aria-pressed="false">Informar período</button>
+        </div>
+        <div id="blocoDias">
+          <input id="dias" type="number" min="0" max="31" step="1" placeholder="Ex.: 12" aria-label="Quantidade de dias trabalhados">
+        </div>
+        <div id="blocoPeriodo" hidden>
+          <div class="row">
+            <div><label for="ini" style="font-weight:500">De</label><input id="ini" type="date"></div>
+            <div><label for="fim" style="font-weight:500">Até</label><input id="fim" type="date"></div>
+          </div>
+          <div class="hint">Conta dias corridos, incluindo o primeiro e o último. Útil para início ou encerramento de contrato no meio do mês.</div>
+        </div>
+        <div class="err" id="erro" role="alert"></div>
+      </div>
+    </section>
+
+    <section aria-label="Resultado" aria-live="polite">
+      <div class="stub">
+        <p class="who" id="rNome">Prestador</p>
+        <p class="value" id="rValor">R$ 0,00</p>
+        <p class="comp" id="rComp">Preencha os dados ao lado</p>
+      </div>
+      <div class="formula">
+        <p style="color:var(--muted);font-size:.85rem">Como chegamos ao valor</p>
+        <div class="eq">
+          <b id="fMensal">R$ 0,00</b><span class="op">÷</span>
+          <b id="fDiasMes">0 dias</b><span class="op">×</span>
+          <b id="fTrab">0 dias</b><span class="op">=</span>
+          <b id="fRes">R$ 0,00</b>
+        </div>
+        <div class="daily" id="fDiaria">Valor por dia: R$ 0,00</div>
+      </div>
+
+      <textarea id="msg" aria-label="Mensagem para o prestador" readonly></textarea>
+      <div class="actions">
+        <button class="btn primary" id="copiar" type="button">Copiar mensagem</button>
+        <button class="btn ghost" id="salvar" type="button">Salvar no histórico</button>
+      </div>
+      <div class="toast" id="toast"></div>
+    </section>
+  </div>
+
+  <section class="history" aria-label="Histórico">
+    <h2>Histórico de cálculos</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Prestador</th><th>Competência</th><th class="num">Mensal</th><th class="num">Dias</th><th class="num">Valor da NF</th><th></th></tr></thead>
+        <tbody id="hist"></tbody>
+      </table>
+      <div class="empty" id="histVazio">Nenhum cálculo salvo ainda. Salve um resultado para consultar depois neste navegador.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const brl = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  let cents = 0, modo = 'dias', ultimo = null;
+
+  // máscara de moeda
+  $('valor').addEventListener('input', e => {
+    const d = e.target.value.replace(/\D/g,'').slice(0,12);
+    cents = d ? parseInt(d,10) : 0;
+    e.target.value = d ? brl(cents/100) : '';
+    calc();
+  });
+
+  // competência padrão: mês atual
+  const hoje = new Date();
+  $('comp').value = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+
+  function diasNoMes(){
+    const v = $('comp').value; if(!v) return 0;
+    const [a,m] = v.split('-').map(Number);
+    return new Date(a, m, 0).getDate();
+  }
+  function compTexto(){
+    const v = $('comp').value; if(!v) return '';
+    const [a,m] = v.split('-').map(Number);
+    return meses[m-1] + ' de ' + a;
+  }
+  function compCurta(){
+    const v = $('comp').value; if(!v) return '';
+    const [a,m] = v.split('-'); return m + '/' + a;
+  }
+
+  function setModo(m){
+    modo = m;
+    $('modoDias').setAttribute('aria-pressed', m==='dias');
+    $('modoPeriodo').setAttribute('aria-pressed', m==='periodo');
+    $('blocoDias').hidden = m!=='dias';
+    $('blocoPeriodo').hidden = m!=='periodo';
+    if(m==='periodo' && $('comp').value){
+      const [a,mm] = $('comp').value.split('-');
+      $('ini').min = $('fim').min = `${a}-${mm}-01`;
+      $('ini').max = $('fim').max = `${a}-${mm}-${String(diasNoMes()).padStart(2,'0')}`;
+    }
+    calc();
+  }
+  $('modoDias').onclick = () => setModo('dias');
+  $('modoPeriodo').onclick = () => setModo('periodo');
+
+  function diasTrabalhados(){
+    if(modo==='dias'){
+      const v = $('dias').value;
+      return v==='' ? null : Number(v);
+    }
+    const i = $('ini').value, f = $('fim').value;
+    if(!i || !f) return null;
+    const di = new Date(i+'T12:00:00'), df = new Date(f+'T12:00:00');
+    if(df < di) return -1;
+    return Math.round((df-di)/86400000) + 1;
+  }
+
+  function calc(){
+    const total = diasNoMes();
+    $('diasMesHint').textContent = total ? `${compTexto().replace(/^./,c=>c.toUpperCase())} tem ${total} dias.` : '';
+    const trab = diasTrabalhados();
+    const mensal = cents/100;
+    let erro = '';
+    if(trab === -1) erro = 'A data final precisa ser igual ou posterior à data inicial.';
+    else if(trab !== null && (!Number.isInteger(trab) || trab < 0)) erro = 'Use um número inteiro de dias.';
+    else if(trab !== null && total && trab > total) erro = `Este mês tem só ${total} dias. Ajuste os dias trabalhados.`;
+    if(modo==='periodo' && $('comp').value && $('ini').value && $('fim').value){
+      const pref = $('comp').value;
+      if(!$('ini').value.startsWith(pref) || !$('fim').value.startsWith(pref)) erro = 'O período precisa estar dentro da competência escolhida.';
+    }
+    $('erro').textContent = erro;
+
+    const ok = !erro && trab !== null && total && mensal > 0;
+    // calcula pelo valor cheio e arredonda só no fim, para não acumular erro de centavos
+    const resultado = ok ? Math.round(mensal * trab / total * 100)/100 : 0;
+    const diaria = ok ? mensal / total : 0;
+    const nome = $('nome').value.trim();
+
+    $('rNome').textContent = nome || 'Prestador';
+    $('rValor').textContent = brl(resultado);
+    $('rComp').textContent = ok ? `Competência ${compCurta()} · ${trab} de ${total} dias` : 'Preencha os dados ao lado';
+    $('fMensal').textContent = brl(mensal);
+    $('fDiasMes').textContent = (total||0) + ' dias';
+    $('fTrab').textContent = (ok ? trab : 0) + (trab===1 ? ' dia' : ' dias');
+    $('fRes').textContent = brl(resultado);
+    $('fDiaria').textContent = 'Valor por dia: ' + diaria.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:4});
+
+    if(ok){
+      const saud = nome ? `Olá, ${nome.split(' ')[0]}! ` : 'Olá! ';
+      $('msg').value = `${saud}Referente à competência ${compCurta()}, o valor para emissão da nota fiscal é ${brl(resultado)}.\n\nCálculo proporcional: ${brl(mensal)} (valor mensal) ÷ ${total} dias do mês × ${trab} ${trab===1?'dia trabalhado':'dias trabalhados'} = ${brl(resultado)}.\n\nQualquer dúvida, fico à disposição.`;
+      ultimo = {nome: nome || '—', comp: compCurta(), mensal, trab, total, resultado, ts: Date.now()};
+    } else {
+      $('msg').value = '';
+      ultimo = null;
+    }
+    $('copiar').disabled = $('salvar').disabled = !ok;
+    $('copiar').style.opacity = $('salvar').style.opacity = ok ? 1 : .5;
+  }
+
+  ['nome','comp','dias','ini','fim'].forEach(id => $(id).addEventListener('input', () => {
+    if(id==='comp' && modo==='periodo') setModo('periodo'); else calc();
+  }));
+
+  function toast(t){ $('toast').textContent = t; clearTimeout(toast._t); toast._t = setTimeout(()=>$('toast').textContent='', 2500); }
+
+  $('copiar').onclick = async () => {
+    const t = $('msg').value; if(!t) return;
+    try { await navigator.clipboard.writeText(t); toast('Mensagem copiada.'); }
+    catch(e){ $('msg').select(); toast('Selecionei o texto. Use Ctrl+C para copiar.'); }
+  };
+
+  // histórico local
+  const KEY = 'nf-proporcional-historico';
+  function lerHist(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } }
+  function gravarHist(h){ try { localStorage.setItem(KEY, JSON.stringify(h)); return true; } catch(e){ return false; } }
+  function renderHist(){
+    const h = lerHist();
+    $('hist').innerHTML = '';
+    $('histVazio').hidden = h.length > 0;
+    h.forEach((r,i) => {
+      const tr = document.createElement('tr');
+      const cells = [r.nome, r.comp, brl(r.mensal), `${r.trab}/${r.total}`, brl(r.resultado)];
+      cells.forEach((c,j) => { const td = document.createElement('td'); td.textContent = c; if(j>=2) td.className='num'; tr.appendChild(td); });
+      const td = document.createElement('td');
+      const b = document.createElement('button'); b.className='linkbtn'; b.textContent='Remover';
+      b.onclick = () => { const n = lerHist(); n.splice(i,1); gravarHist(n); renderHist(); };
+      td.appendChild(b); tr.appendChild(td);
+      $('hist').appendChild(tr);
+    });
+  }
+  $('salvar').onclick = () => {
+    if(!ultimo) return;
+    const h = lerHist(); h.unshift(ultimo);
+    if(gravarHist(h.slice(0,100))){ renderHist(); toast('Salvo no histórico.'); }
+    else toast('Não foi possível salvar neste navegador.');
+  };
+
+  renderHist();
+  calc();
+})();
+</script>
+</body>
+</html>
